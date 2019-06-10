@@ -1,8 +1,22 @@
 # Import flask and template operators
 from flask import Flask, render_template
+from celery import Celery
 import os
 # Application Definition
 app = Flask(__name__)
+
+#Celery Configration
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+celery = Celery('reptile',broker=app.config['CELERY_BROKER_URL'])
+#celery.conf.update(app.config)
+@celery.task
+def my_background_task(arg1, arg2):
+    # some long running task here
+    return "Executed Celery Task "
+
+task = my_background_task.apply_async(args=[10, 20], countdown=10)
 # Configurations
 app.config.from_object(os.getenv('environment'))
 # for using .env file pip install python-dotenv
